@@ -8,6 +8,7 @@ const ArloClient = require('./lib/arloClient');
 const WpClient = require('./lib/wpClient');
 const Geocoder = require('./lib/geocoder');
 const { processApplicator } = require('./lib/processor');
+const { sendCongratulationsEmail } = require('./lib/emailSender');
 const { runSync } = require('./lib/syncRunner');
 
 const PORT = process.env.PORT || 3000;
@@ -234,6 +235,24 @@ app.get('/test', async (req, res) => {
   res.json(result);
 });
 
+// GET /test/email - preview the congratulations email
+app.get('/test/email', async (req, res) => {
+  const name = req.query.name || 'Test';
+  log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  log(`TEST EMAIL: sending sample to test recipient (name: ${name})`);
+
+  const result = await sendCongratulationsEmail({
+    firstName: name,
+    lastName: 'Applicant',
+    email: 'real-applicant@example.com',
+  });
+
+  res.json({
+    message: 'Test email attempt complete',
+    result,
+  });
+});
+
 // POST /webhook - receives Arlo webhook events
 app.post('/webhook', async (req, res) => {
   log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -331,6 +350,7 @@ app.listen(PORT, () => {
   log(`  GET  /api/webhook/history Webhook history`);
   log(`  GET  /api/logs            View logs`);
   log(`  GET  /test?id=NN          Test a registration`);
+  log(`  GET  /test/email          Test congratulations email`);
   log(`  POST /webhook             Arlo webhook`);
   log('========================================');
   log('');
