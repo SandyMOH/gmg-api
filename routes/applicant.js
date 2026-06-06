@@ -1,0 +1,132 @@
+const express = require("express");
+const router = express.Router();
+const {
+  createApplicant, createSubmission, getSubmission,
+  getAllSubmissions, getSubmissionByCode, submitApplication,
+  createReviewerToken,
+} = require("../lib/db");
+const { requireReviewer } = require("../middleware/reviewerAuth");
+
+// ============================================
+// PUBLIC routes (no auth)
+// ============================================
+
+// POST /api/applicants — create applicant + submission, returns apply link
+router.post("/", (req, res) => {
+  try {
+    const {
+      arloRegistrationId, licenseNumber, certificationDate,
+      name, email, phoneNumber, company,
+      address, suburb, city, state, region, postCode,
+    } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({ error: "name and email are required" });
+    }
+
+    const applicantId = createApplicant({
+      arloRegistrationId, licenseNumber, certificationDate,
+      name, email, phoneNumber, company,
+      address, suburb, city, state, region, postCode,
+    });
+
+    const { id: submissionId, uniqueCode } = createSubmission(applicantId);
+
+    const appUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const applyLink = `${appUrl}/apply/${uniqueCode}`;
+
+    return res.status(201).json({ applicantId, submissionId, uniqueCode, applyLink });
+  } catch (error) {
+    console.error("Create applicant error:", error);
+    return res.status(500).json({ error: "Failed to create applicant" });
+  }
+});
+
+// GET /api/applicants/code/:code — lookup submission by unique code (for applicant form)
+router.get("/code/:code", (req, res) => {
+  try {
+    const { code } = req.params;
+    if (!code || code.length < 20) {
+      return res.status(400).json({ error: "Invalid application link" });
+    }
+
+    const submission = getSubmissionByCode(code);
+    if (!submission) {
+      return res.status(404).json({ error: "Application not found. This link may be invalid." });
+    }
+
+    return res.json({ submission });
+  } catch (error) {
+    console.error("Lookup error:", error);
+    return res.status(500).json({ error: "Failed to load application" });
+  }
+});
+
+// POST /api/applicants/:id/submit — applicant finalizes submission
+router.post("/:id/submit", (req, res) => {
+  try {
+    const { id } = req.params;
+    const { consentDirectoryListing } = req.body;
+
+    const submission = getSubmission(id);
+    if (!submission) return res.status(404).json({ error: "Submission not found" });
+    if (submission.status !== "pending") {
+      return res.status(400).json({ error: "This application has already been submitted" });
+    }
+    if (!submission.image_url || !submission.video_url) {
+      return res.status(400).json({ error: "Please upload both image and video before submitting" });
+    }
+
+    submitApplication(id, consentDirectoryListing);
+
+    // Generate reviewer token + send notification
+    let reviewerToken = null;
+    try {
+      const { token } = createReviewerToken(id);
+      reviewerToken = token;
+
+      // Use your existing emailSender to notify reviewer
+      const emailSender = require("../lib/emailSender");
+      if (emailSender.notifyReviewer) {
+        emailSender.notifyReviewer(submission, token);
+      }
+    } catch (emailError) {
+      console.error("Failed to send notification:", emailError);
+    }
+
+    return res.json({ message: "Application submitted successfully", reviewerToken });
+  } catch (error) {
+    console.error("Submit error:", error);
+    return res.status(500).json({ error: "Failed to submit application" });
+  }
+});
+
+// ============================================
+// PROTECTED routes (reviewer only)
+// ============================================
+
+// GET /api/applicants — list all submissions
+router.get("/", requireReviewer, (req, res) => {
+  try {
+    const status = req.query.status || null;
+    const submissions = getAllSubmissions(status);
+    return res.json({ submissions });
+  } catch (error) {
+    console.error("Fetch error:", error);
+    return res.status(500).json({ error: "Failed to fetch submissions" });
+  }
+});
+
+// GET /api/applicants/:id — get single submission
+router.get("/:id", requireReviewer, (req, res) => {
+  try {
+    const submission = getSubmission(req.params.id);
+    if (!submission) return res.status(404).json({ error: "Submission not found" });
+    return res.json({ submission });
+  } catch (error) {
+    console.error("Fetch error:", error);
+    return res.status(500).json({ error: "Failed to fetch submission" });
+  }
+});
+
+module.exports = router;
