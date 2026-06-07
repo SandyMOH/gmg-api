@@ -32,14 +32,18 @@ app.use((req, res, next) => {
 
 app.use('/', systemRoutes);                 
 
-app.use('/api/sync', syncRoutes);            // Handles '/api/sync', '/api/sync/dry', '/api/sync/history'
-app.use('/api/spraying', sprayingRoutes);    // Handles '/api/spraying/approve'
-app.use('/webhook', webhookRoutes);          // Handles '/webhook', '/api/webhook/history'
-app.use('/applicant', applicantRoutes);      // Handles '/applicant/:id'
-app.use('/api/auth', authRoutes);          // Handles '/api/auth/reviewer-token'
-app.use('/api/upload', uploadRoutes);      // Handles '/api/upload'
-app.use('/api/review', reviewRoutes);     // Handles '/api/review/submit', '/api/review/history'
-app.use('/test', testRoutes);                // Handles '/test', '/test/email'
+app.use('/', systemRoutes);
+app.use('/api/auth', authRoutes);            
+app.use('/api/applicants', applicantRoutes);  
+app.use('/api/reviews', reviewRoutes);        
+app.use('/api/uploads', uploadRoutes);        
+app.use('/api/syncs', syncRoutes);           
+app.use('/api/spraying', sprayingRoutes);     
+app.use('/api/webhooks', webhookRoutes);     
+
+if (process.env.NODE_ENV !== "production") {
+  app.use('/tests', testRoutes);
+}
 
 app.listen(PORT, () => {
   log('');
