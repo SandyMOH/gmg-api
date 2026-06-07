@@ -12,6 +12,7 @@ const systemRoutes = require('./routes/system');
 const sprayingRoutes = require('./routes/spraying');
 const testRoutes = require('./routes/test');
 const applicantRoutes = require('./routes/applicant');
+const { requireApiSecret } = require('./middleware/apiSecret');
 const authRoutes = require('./routes/auth');
 const reviewRoutes = require('./routes/review');
 const uploadRoutes = require('./routes/upload');
@@ -34,7 +35,7 @@ app.use('/', systemRoutes);
 
 app.use('/', systemRoutes);
 app.use('/api/auth', authRoutes);            
-app.use('/api/applicants', applicantRoutes);  
+app.use('/api/applicants', requireApiSecret, applicantRoutes);  
 app.use('/api/reviews', reviewRoutes);        
 app.use('/api/uploads', uploadRoutes);        
 app.use('/api/syncs', syncRoutes);           
