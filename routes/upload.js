@@ -17,11 +17,11 @@ router.post("/", upload.single("file"), async (req, res) => {
     const { submissionId, fileType } = req.body;
 
     if (!file || !submissionId || !fileType) {
-      return res.status(400).json({ error: "file, submissionId, and fileType are required" });
+      return res.status(400).json({ error: "file, submissionId, and fileType are required", ok: false });
     }
 
     const submission = getSubmission(submissionId);
-    if (!submission) return res.status(404).json({ error: "Submission not found" });
+    if (!submission) return res.status(404).json({ error: "Submission not found", ok: false });
 
     // Validate file type
     const allowedImage = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -31,6 +31,7 @@ router.post("/", upload.single("file"), async (req, res) => {
     if (!allowed.includes(file.mimetype)) {
       return res.status(400).json({
         error: `Invalid ${fileType} format. Allowed: ${allowed.join(", ")}`,
+        ok: false
       });
     }
 
@@ -51,10 +52,10 @@ router.post("/", upload.single("file"), async (req, res) => {
       });
     }
 
-    return res.json({ message: `${fileType} uploaded successfully`, url: result.url, filename: file.originalname });
+    return res.json({ message: `${fileType} uploaded successfully`, url: result.url, filename: file.originalname, ok: true });
   } catch (error) {
     console.error("Upload error:", error);
-    return res.status(500).json({ error: "Failed to upload file" });
+    return res.status(500).json({ error: "Failed to upload file", ok: false });
   }
 });
 

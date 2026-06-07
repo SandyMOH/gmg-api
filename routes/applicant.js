@@ -21,7 +21,7 @@ router.post("/", (req, res) => {
     } = req.body;
 
     if (!name || !email) {
-      return res.status(400).json({ error: "name and email are required" });
+      return res.status(400).json({ error: "name and email are required", ok: false });
     }
 
     const applicantId = createApplicant({
@@ -47,18 +47,18 @@ router.get("/code/:code", (req, res) => {
   try {
     const { code } = req.params;
     if (!code || code.length < 20) {
-      return res.status(400).json({ error: "Invalid application link" });
+      return res.status(400).json({ error: "Invalid application link", ok: false });
     }
 
     const submission = getSubmissionByCode(code);
     if (!submission) {
-      return res.status(404).json({ error: "Application not found. This link may be invalid." });
+      return res.status(404).json({ error: "Application not found. This link may be invalid.", ok: false });
     }
 
-    return res.json({ submission });
+    return res.json({ submission, ok: true });
   } catch (error) {
     console.error("Lookup error:", error);
-    return res.status(500).json({ error: "Failed to load application" });
+    return res.status(500).json({ error: "Failed to load application", ok: false });
   }
 });
 
@@ -69,12 +69,12 @@ router.post("/:id/submit", (req, res) => {
     const { consentDirectoryListing } = req.body;
 
     const submission = getSubmission(id);
-    if (!submission) return res.status(404).json({ error: "Submission not found" });
+    if (!submission) return res.status(404).json({ error: "Submission not found", ok: false });
     if (submission.status !== "pending") {
-      return res.status(400).json({ error: "This application has already been submitted" });
+      return res.status(400).json({ error: "This application has already been submitted", ok: false });
     }
     if (!submission.image_url || !submission.video_url) {
-      return res.status(400).json({ error: "Please upload both image and video before submitting" });
+      return res.status(400).json({ error: "Please upload both image and video before submitting", ok: false  });
     }
 
     submitApplication(id, consentDirectoryListing);
@@ -94,10 +94,10 @@ router.post("/:id/submit", (req, res) => {
       console.error("Failed to send notification:", emailError);
     }
 
-    return res.json({ message: "Application submitted successfully", reviewerToken });
+    return res.json({ message: "Application submitted successfully", reviewerToken, ok: true });
   } catch (error) {
     console.error("Submit error:", error);
-    return res.status(500).json({ error: "Failed to submit application" });
+    return res.status(500).json({ error: "Failed to submit application", ok: false });
   }
 });
 
