@@ -11,36 +11,36 @@ const { requireReviewer } = require("../middleware/reviewerAuth");
 // PUBLIC routes (no auth)
 // ============================================
 
-// POST /api/applicants — create applicant + submission, returns apply link
-router.post("/", (req, res) => {
-  try {
-    const {
-      arloRegistrationId, licenseNumber, certificationDate,
-      name, email, phoneNumber, company,
-      address, suburb, city, state, region, postCode,
-    } = req.body;
+// // POST /api/applicants — create applicant + submission, returns apply link
+// router.post("/", (req, res) => {
+//   try {
+//     const {
+//       arloRegistrationId, licenseNumber, certificationDate,
+//       name, email, phoneNumber, company,
+//       address, suburb, city, state, region, postCode,
+//     } = req.body;
 
-    if (!name || !email) {
-      return res.status(400).json({ error: "name and email are required", ok: false });
-    }
+//     if (!name || !email) {
+//       return res.status(400).json({ error: "name and email are required", ok: false });
+//     }
 
-    const applicantId = createApplicant({
-      arloRegistrationId, licenseNumber, certificationDate,
-      name, email, phoneNumber, company,
-      address, suburb, city, state, region, postCode,
-    });
+//     const applicantId = createApplicant({
+//       arloRegistrationId, licenseNumber, certificationDate,
+//       name, email, phoneNumber, company,
+//       address, suburb, city, state, region, postCode,
+//     });
 
-    const { id: submissionId, uniqueCode } = createSubmission(applicantId);
+//     const { id: submissionId, uniqueCode } = createSubmission(applicantId);
 
-    const appUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-    const applyLink = `${appUrl}/apply/${uniqueCode}`;
+//     const appUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+//     const applyLink = `${appUrl}/apply/${uniqueCode}`;
 
-    return res.status(201).json({ applicantId, submissionId, uniqueCode, applyLink });
-  } catch (error) {
-    console.error("Create applicant error:", error);
-    return res.status(500).json({ error: "Failed to create applicant" });
-  }
-});
+//     return res.status(201).json({ applicantId, submissionId, uniqueCode, applyLink });
+//   } catch (error) {
+//     console.error("Create applicant error:", error);
+//     return res.status(500).json({ error: "Failed to create applicant" });
+//   }
+// });
 
 // GET /api/applicants/code/:code — lookup submission by unique code (for applicant form)
 router.get("/code/:code", (req, res) => {
@@ -109,7 +109,9 @@ router.post("/:id/submit", (req, res) => {
 router.get("/", requireReviewer, (req, res) => {
   try {
     const status = req.query.status || null;
-    const submissions = getAllSubmissions(status);
+    const search = req.query.search || null;
+    const select = req.query.select || null;
+    const submissions = getAllSubmissions({ status, search, select });
     return res.json({ submissions });
   } catch (error) {
     console.error("Fetch error:", error);
