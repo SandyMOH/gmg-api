@@ -24,9 +24,13 @@ app.use(cookieParser());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(express.json());
+app.use((req, res, next) => {
+  log(`${req.method} ${req.path}`);
+  next();
+});
 
-// Mount the routers to their base paths
-app.use('/', systemRoutes);                  // Handles '/', '/api/status', '/api/logs'
+
+app.use('/', systemRoutes);                 
 
 app.use('/api/sync', syncRoutes);            // Handles '/api/sync', '/api/sync/dry', '/api/sync/history'
 app.use('/api/spraying', sprayingRoutes);    // Handles '/api/spraying/approve'
