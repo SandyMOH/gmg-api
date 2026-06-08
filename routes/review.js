@@ -77,9 +77,10 @@ router.post("/approve/:submissionId", requireReviewer, async (req, res) => {
 // ============================================
 // POST /api/review/reject
 // ============================================
-router.post("/reject", requireReviewer, async (req, res) => {
+router.post("/reject/:submissionId", requireReviewer, async (req, res) => {
   try {
-    const { submissionId, reviewerNotes } = req.body;
+    const { submissionId } = req.params;
+    const { reviewerNotes } = req.body;
 
     if (!submissionId) {
       return res.status(400).json({ error: "submissionId is required" });
@@ -121,7 +122,8 @@ router.post("/reject", requireReviewer, async (req, res) => {
       message: "Application rejected — resubmission link sent",
       submissionId,
       status: "pending", // Resetting to pending based on your original logic
-      newApplyLink,
+      ok: true,
+      newUniqueCode,
     });
 
   } catch (error) {
