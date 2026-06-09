@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const { requireReviewer } = require("../middleware/reviewerAuth");
 const { getSubmission, updateSubmissionStatus, resetSubmission } = require("../lib/db");
+const { sendRejectionEmail } = require("../lib/emailSender");
+
 
 // ============================================
 // POST /api/review/approve
@@ -102,20 +104,17 @@ router.post("/reject/:submissionId", requireReviewer, async (req, res) => {
     const newApplyLink = `${frontendUrl}/apply/${newUniqueCode}`;
 
     // 4. Send rejection email to applicant with new submit link
-    // try {
-    //   const emailSender = require("../lib/emailSender");
-    //   if (emailSender.sendRejectionEmail) {
-    //     await emailSender.sendRejectionEmail({
-    //       to: submission.email,
-    //       name: submission.name,
-    //       reviewerNotes: reviewerNotes || "",
-    //       newApplyLink,
-    //     });
-    //     console.log("[EMAIL] Sent rejection email to:", submission.email);
-    //   }
-    // } catch (emailError) {
-    //   console.error("[EMAIL] Failed to send rejection email:", emailError.message);
-    // }
+    try {
+      await sendRejectionEmail({
+        name: submission.name,
+        email: submission.email,
+        reviewerNotes: reviewerNotes || "",
+        newApplyLink,
+      });
+      console.log("[EMAIL] Sent rejection email to:", submission.email);
+    } catch (emailError) {
+      console.error("[EMAIL] Failed to send rejection email:", emailError.message);
+    }
 
     return res.json({
       message: "Application rejected — resubmission link sent",

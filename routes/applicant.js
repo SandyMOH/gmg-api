@@ -6,6 +6,7 @@ const {
   createReviewerToken,
 } = require("../lib/db");
 const { requireReviewer } = require("../middleware/reviewerAuth");
+const { notifyReviewer } = require("../lib/emailSender");
 
 // ============================================
 // PUBLIC routes (no auth)
@@ -63,7 +64,7 @@ router.get("/code/:code", (req, res) => {
 });
 
 // POST /api/applicants/:id/submit — applicant finalizes submission
-router.post("/:id/submit", (req, res) => {
+router.post("/:id/submit", async (req, res) => {
   try {
     const { id } = req.params;
     const { consentDirectoryListing } = req.body;
@@ -85,11 +86,7 @@ router.post("/:id/submit", (req, res) => {
       const { token } = createReviewerToken(id);
       reviewerToken = token;
 
-      // Use your existing emailSender to notify reviewer
-      const emailSender = require("../lib/emailSender");
-      if (emailSender.notifyReviewer) {
-        emailSender.notifyReviewer(submission, token);
-      }
+      await notifyReviewer(submission, token);
     } catch (emailError) {
       console.error("Failed to send notification:", emailError);
     }
