@@ -7,7 +7,7 @@ const path = require('path');
 
 // Import your new route files
 const syncRoutes = require('./routes/sync');
-const webhookRoutes = require('./routes/webhook');
+const arloRoutes = require('./routes/arlo');
 const systemRoutes = require('./routes/system');
 const sprayingRoutes = require('./routes/spraying');
 const testRoutes = require('./routes/test');
@@ -40,7 +40,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/uploads', uploadRoutes);        
 app.use('/api/syncs', syncRoutes);           
 app.use('/api/spraying', sprayingRoutes);     
-app.use('/api/webhooks', webhookRoutes);     
+app.use('/api/arlo', arloRoutes);
 
 if (process.env.NODE_ENV !== "production") {
   app.use('/tests', testRoutes);

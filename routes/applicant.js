@@ -17,7 +17,7 @@ const { requireReviewer } = require("../middleware/reviewerAuth");
 //     const {
 //       arloRegistrationId, licenseNumber, certificationDate,
 //       name, email, phoneNumber, company,
-//       address, suburb, city, state, region, postCode,
+//       address, suburb, city, state, postCode,
 //     } = req.body;
 
 //     if (!name || !email) {
@@ -27,7 +27,7 @@ const { requireReviewer } = require("../middleware/reviewerAuth");
 //     const applicantId = createApplicant({
 //       arloRegistrationId, licenseNumber, certificationDate,
 //       name, email, phoneNumber, company,
-//       address, suburb, city, state, region, postCode,
+//       address, suburb, city, state, postCode,
 //     });
 
 //     const { id: submissionId, uniqueCode } = createSubmission(applicantId);

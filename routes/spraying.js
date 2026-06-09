@@ -25,7 +25,6 @@ router.post('/approve', async (req, res) => {
       certDate,
       status: 'certified',
       phone: '',
-      region: '',
       suburb: '',
       city: '',
       state: '',
@@ -40,7 +39,6 @@ router.post('/approve', async (req, res) => {
       const acf = existing.acf || {};
       Object.assign(wpData, {
         phone: acf.phone_number || '',
-        region: acf.region || '',
         suburb: acf.suburb || '',
         city: acf.city || '',
         state: acf.state || '',

@@ -33,7 +33,6 @@ router.post("/approve/:submissionId", requireReviewer, async (req, res) => {
     //       name: submission.name,
     //       email: submission.email,
     //       company: submission.company,
-    //       region: submission.region,
     //       certificationDate: submission.certification_date,
     //       consentDirectoryListing: !!submission.consent_directory_listing,
     //       status: "certified",
