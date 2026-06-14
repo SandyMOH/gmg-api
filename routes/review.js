@@ -3,6 +3,7 @@ const router = express.Router();
 const { requireReviewer } = require("../middleware/reviewerAuth");
 const { getSubmission, updateSubmissionStatus, resetSubmission } = require("../lib/db");
 const { sendRejectionEmail } = require("../lib/emailSender");
+const { wp, geocoder } = require("../lib/clients");
 
 
 // ============================================
@@ -26,25 +27,41 @@ router.post("/approve/:submissionId", requireReviewer, async (req, res) => {
     // 1. Update local DB
     updateSubmissionStatus(submissionId, "approved", reviewerNotes);
 
-    // 2. Update WordPress certified applicator directory
-    // try {
-    //   const wpClient = require("../lib/wpClient");
-    //   if (wpClient.updateCertifiedApplicator) {
-    //     await wpClient.updateCertifiedApplicator({
-    //       arloRegistrationId: submission.arlo_registration_id,
-    //       name: submission.name,
-    //       email: submission.email,
-    //       company: submission.company,
-    //       certificationDate: submission.certification_date,
-    //       consentDirectoryListing: !!submission.consent_directory_listing,
-    //       status: "certified",
-    //     });
-    //     console.log("[WP] Updated certified applicator directory");
-    //   }
-    // } catch (wpError) {
-    //   console.error("[WP] Failed to update:", wpError.message);
-    //   // Don't fail the whole request — log and continue
-    // }
+    // 2. Add applicant to WordPress certified applicator directory
+    try {
+      const displayAddress = [submission.suburb, submission.city, submission.state, submission.post_code]
+        .filter(Boolean)
+        .join(', ');
+
+      const geo = await geocoder.geocode({
+        street: submission.address,
+        suburb: submission.suburb,
+        city: submission.city,
+        state: submission.state,
+        postCode: submission.post_code,
+      });
+
+      await wp.createApplicator({
+        title: submission.name,
+        arloRegistrationId: submission.arlo_registration_id,
+        licenseNumber: submission.license_number,
+        phone: submission.phone_number,
+        email: submission.email,
+        certDate: submission.certification_date,
+        company: submission.company,
+        suburb: submission.suburb,
+        city: submission.city,
+        state: submission.state,
+        postCode: submission.post_code,
+        streetAddress: submission.address,
+        displayAddress,
+        ...(geo ? { lat: geo.lat, lng: geo.lng } : {}),
+      });
+      console.log("[WP] Added applicant to certified applicator directory");
+    } catch (wpError) {
+      console.error("[WP] Failed to add applicant:", wpError.message);
+      // Don't fail the whole request — log and continue
+    }
 
     // 3. Trigger Arlo report generation [PLACEHOLDER]
     // try {
