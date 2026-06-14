@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { requireReviewer } = require("../middleware/reviewerAuth");
 const { getSubmission, updateSubmissionStatus, resetSubmission } = require("../lib/db");
-const { sendRejectionEmail } = require("../lib/emailSender");
+const { sendRejectionEmail, sendErrorAlert } = require("../lib/emailSender");
 const { wp, geocoder } = require("../lib/clients");
 
 
@@ -60,7 +60,9 @@ router.post("/approve/:submissionId", requireReviewer, async (req, res) => {
       console.log("[WP] Added applicant to certified applicator directory");
     } catch (wpError) {
       console.error("[WP] Failed to add applicant:", wpError.message);
-      await sendErrorAlert('Create Applicant/Submission (WP)', wpError.message, { submissionId });
+      try {
+        await sendErrorAlert('Create Applicant/Submission (WP)', wpError.message, { submissionId });
+      } catch (_) {}
       // Don't fail the whole request — log and continue
     }
 

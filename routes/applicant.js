@@ -6,7 +6,7 @@ const {
   createReviewerToken,
 } = require("../lib/db");
 const { requireReviewer } = require("../middleware/reviewerAuth");
-const { notifyReviewer } = require("../lib/emailSender");
+const { notifyReviewer, sendErrorAlert } = require("../lib/emailSender");
 
 // GET /api/applicants/code/:code — lookup submission by unique code (for applicant form)
 router.get("/code/:code", (req, res) => {

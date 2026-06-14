@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const { uploadFile } = require("../lib/storage");
 const { getSubmission, updateSubmissionFiles } = require("../lib/db");
+const { sendErrorAlert } = require("../lib/emailSender");
 
 // Multer config — store in memory, upload to storage from there
 const upload = multer({

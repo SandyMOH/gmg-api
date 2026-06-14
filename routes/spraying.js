@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { log } = require('../lib/logger');
 const { wp } = require('../lib/clients');
+const { sendErrorAlert } = require('../lib/emailSender');
 
 router.post('/approve', async (req, res) => {
   const { arloRegistrationId, licenseNumber, name, email, company, reviewedAt } = req.body;
