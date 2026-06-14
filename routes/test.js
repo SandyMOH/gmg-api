@@ -4,6 +4,7 @@ const { log } = require('../lib/logger');
 const { state, MAX_WEBHOOK_HISTORY, pushHistory } = require('../lib/state');
 const { handleRegistration } = require('../lib/registrationHandler');
 const { sendCongratulationsEmail } = require('../lib/emailSender');
+const { arlo } = require('../lib/clients');
 
 router.get('/', async (req, res) => {
   const { id } = req.query;
@@ -16,6 +17,20 @@ router.get('/', async (req, res) => {
   pushHistory(state.webhookHistory, { type: 'test', registrationId: id, time: new Date().toISOString(), result }, MAX_WEBHOOK_HISTORY);
 
   res.json(result);
+});
+
+router.get('/arlo-registration', async (req, res) => {
+  const id = req.query.id || '35';
+  log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  log(`TEST ARLO: fetching registration ${id}`);
+
+  try {
+    const raw = await arlo.fetchRegistration(id);
+    const extracted = arlo.extractApplicator(raw);
+    res.json({ raw, extracted });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.get('/email', async (req, res) => {
