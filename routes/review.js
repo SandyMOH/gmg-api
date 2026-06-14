@@ -9,7 +9,7 @@ const { wp, geocoder } = require("../lib/clients");
 // ============================================
 // POST /api/review/approve
 // ============================================
-router.post("/approve/:submissionId", requireReviewer, async (req, res) => {
+router.post("/:submissionId/approve", requireReviewer, async (req, res) => {
   try {
     const { submissionId } = req.params;
     const { reviewerNotes } = req.body;
@@ -99,7 +99,7 @@ router.post("/approve/:submissionId", requireReviewer, async (req, res) => {
 // ============================================
 // POST /api/review/reject
 // ============================================
-router.post("/reject/:submissionId", requireReviewer, async (req, res) => {
+router.post("/:submissionId/reject", requireReviewer, async (req, res) => {
   try {
     const { submissionId } = req.params;
     const { reviewerNotes } = req.body;
