@@ -60,6 +60,7 @@ router.post("/approve/:submissionId", requireReviewer, async (req, res) => {
       console.log("[WP] Added applicant to certified applicator directory");
     } catch (wpError) {
       console.error("[WP] Failed to add applicant:", wpError.message);
+      await sendErrorAlert('Create Applicant/Submission (WP)', wpError.message, { submissionId });
       // Don't fail the whole request — log and continue
     }
 
@@ -88,6 +89,7 @@ router.post("/approve/:submissionId", requireReviewer, async (req, res) => {
 
   } catch (error) {
     console.error("Approve error:", error);
+    await sendErrorAlert('Approve Application', error.message, { submissionId });
     return res.status(500).json({ error: "Failed to process approval", ok: false });
   }
 });
@@ -143,6 +145,7 @@ router.post("/reject/:submissionId", requireReviewer, async (req, res) => {
 
   } catch (error) {
     console.error("Reject error:", error);
+    await sendErrorAlert('Reject Application', error.message, { submissionId });
     return res.status(500).json({ error: "Failed to process rejection" });
   }
 });

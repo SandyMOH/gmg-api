@@ -8,41 +8,6 @@ const {
 const { requireReviewer } = require("../middleware/reviewerAuth");
 const { notifyReviewer } = require("../lib/emailSender");
 
-// ============================================
-// PUBLIC routes (no auth)
-// ============================================
-
-// // POST /api/applicants — create applicant + submission, returns apply link
-// router.post("/", (req, res) => {
-//   try {
-//     const {
-//       arloRegistrationId, licenseNumber, certificationDate,
-//       name, email, phoneNumber, company,
-//       address, suburb, city, state, postCode,
-//     } = req.body;
-
-//     if (!name || !email) {
-//       return res.status(400).json({ error: "name and email are required", ok: false });
-//     }
-
-//     const applicantId = createApplicant({
-//       arloRegistrationId, licenseNumber, certificationDate,
-//       name, email, phoneNumber, company,
-//       address, suburb, city, state, postCode,
-//     });
-
-//     const { id: submissionId, uniqueCode } = createSubmission(applicantId);
-
-//     const appUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-//     const applyLink = `${appUrl}/apply/${uniqueCode}`;
-
-//     return res.status(201).json({ applicantId, submissionId, uniqueCode, applyLink });
-//   } catch (error) {
-//     console.error("Create applicant error:", error);
-//     return res.status(500).json({ error: "Failed to create applicant" });
-//   }
-// });
-
 // GET /api/applicants/code/:code — lookup submission by unique code (for applicant form)
 router.get("/code/:code", (req, res) => {
   try {
@@ -94,6 +59,7 @@ router.post("/:id/submit", async (req, res) => {
     return res.json({ message: "Application submitted successfully", reviewerToken, ok: true });
   } catch (error) {
     console.error("Submit error:", error);
+    await sendErrorAlert('Submit Application', error.message, { submissionId: id });
     return res.status(500).json({ error: "Failed to submit application", ok: false });
   }
 });

@@ -55,6 +55,7 @@ router.post("/", upload.single("file"), async (req, res) => {
     return res.json({ message: `${fileType} uploaded successfully`, url: result.url, filename: file.originalname, ok: true });
   } catch (error) {
     console.error("Upload error:", error);
+    await sendErrorAlert('File Upload', error.message, { submissionId: req.body.submissionId });
     return res.status(500).json({ error: "Failed to upload file", ok: false });
   }
 });
