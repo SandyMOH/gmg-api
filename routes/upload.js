@@ -5,10 +5,16 @@ const { uploadFile } = require("../lib/storage");
 const { getSubmission, updateSubmissionFiles } = require("../lib/db");
 const { sendErrorAlert } = require("../lib/emailSender");
 
+// Size limits per file type
+const FILE_SIZE_LIMITS = {
+  image: 10 * 1024 * 1024,  // 10MB
+  video: 100 * 1024 * 1024, // 100MB
+};
+
 // Multer config — store in memory, upload to storage from there
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB max
+  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB hard ceiling (multer-level)
 });
 
 // POST /api/upload — upload image or video
@@ -33,6 +39,16 @@ router.post("/", upload.single("file"), async (req, res) => {
       return res.status(400).json({
         error: `Invalid ${fileType} format. Allowed: ${allowed.join(", ")}`,
         ok: false
+      });
+    }
+
+    // Validate file size
+    const maxSize = FILE_SIZE_LIMITS[fileType];
+    if (maxSize && file.size > maxSize) {
+      const maxMB = Math.round(maxSize / (1024 * 1024));
+      return res.status(400).json({
+        error: `${fileType} file too large. Maximum size is ${maxMB}MB.`,
+        ok: false,
       });
     }
 
@@ -61,4 +77,4 @@ router.post("/", upload.single("file"), async (req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = router;    
