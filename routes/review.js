@@ -18,7 +18,7 @@ router.post("/:submissionId/approve", requireReviewer, async (req, res) => {
       return res.status(400).json({ error: "submissionId is required" });
     }
 
-    const submission = getSubmission(submissionId);
+    const submission = await getSubmission(submissionId);
     if (!submission) return res.status(404).json({ error: "Submission not found" });
     if (submission.status !== "submitted") {
       return res.status(400).json({ error: `Cannot review — current status is "${submission.status}"` });
@@ -26,13 +26,13 @@ router.post("/:submissionId/approve", requireReviewer, async (req, res) => {
 
     const now = new Date();
     const year = now.getFullYear();
-    const certCount = countCertificatesForYear(year);
+    const certCount = await countCertificatesForYear(year);
     const seqPadded = String(certCount + 1).padStart(4, "0");
     const licenseNumber = `GMG-TXR-${year}-${seqPadded}`;
-    const certificationDate = now.toISOString().split("T")[0]; 
+    const certificationDate = now.toISOString().split("T")[0];
 
     // 2. Update local DB (status + license + cert date)
-    updateSubmissionStatus(submissionId, "approved", reviewerNotes, {
+    await updateSubmissionStatus(submissionId, "approved", reviewerNotes, {
       license_number: licenseNumber,
       certification_date: certificationDate,
     });
@@ -117,17 +117,17 @@ router.post("/:submissionId/reject", requireReviewer, async (req, res) => {
       return res.status(400).json({ error: "submissionId is required" });
     }
 
-    const submission = getSubmission(submissionId);
+    const submission = await getSubmission(submissionId);
     if (!submission) return res.status(404).json({ error: "Submission not found" });
     if (submission.status !== "submitted") {
       return res.status(400).json({ error: `Cannot review — current status is "${submission.status}"` });
     }
 
     // 1. Update status to rejected (keeps reviewer_notes for record)
-    updateSubmissionStatus(submissionId, "rejected", reviewerNotes);
+    await updateSubmissionStatus(submissionId, "rejected", reviewerNotes);
 
     // 2. Reset the submission — clears files, generates new unique_code
-    const newUniqueCode = resetSubmission(submissionId);
+    const newUniqueCode = await resetSubmission(submissionId);
 
     // 3. Build new apply link
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";

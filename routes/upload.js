@@ -27,7 +27,7 @@ router.post("/", upload.single("file"), async (req, res) => {
       return res.status(400).json({ error: "file, submissionId, and fileType are required", ok: false });
     }
 
-    const submission = getSubmission(submissionId);
+    const submission = await getSubmission(submissionId);
     if (!submission) return res.status(404).json({ error: "Submission not found", ok: false });
 
     // Validate file type
@@ -58,12 +58,12 @@ router.post("/", upload.single("file"), async (req, res) => {
 
     // Update database
     if (fileType === "image") {
-      updateSubmissionFiles(submissionId, {
+      await updateSubmissionFiles(submissionId, {
         imageUrl: result.url, imageFilename: file.originalname,
         videoUrl: null, videoFilename: null,
       });
     } else {
-      updateSubmissionFiles(submissionId, {
+      await updateSubmissionFiles(submissionId, {
         imageUrl: null, imageFilename: null,
         videoUrl: result.url, videoFilename: file.originalname,
       });

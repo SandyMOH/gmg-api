@@ -24,12 +24,12 @@ router.post("/login", (req, res) => {
 });
 
 // POST /api/auth/token — Token-based auto-login
-router.post("/token", (req, res) => {
+router.post("/token", async (req, res) => {
   try {
     const { token } = req.body;
     if (!token) return res.status(400).json({ error: "Token is required", ok: false });
 
-    const result = validateReviewerToken(token);
+    const result = await validateReviewerToken(token);
     if (!result.valid) {
       return res.status(401).json({
         error: result.reason === "expired"
