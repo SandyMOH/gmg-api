@@ -16,7 +16,7 @@ const { requireApiSecret } = require('./middleware/apiSecret');
 const authRoutes = require('./routes/auth');
 const reviewRoutes = require('./routes/review');
 const uploadRoutes = require('./routes/upload');
-
+const { initTables } = require('./lib/db'); 
 
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -46,10 +46,18 @@ if (process.env.NODE_ENV !== "production") {
   app.use('/tests', testRoutes);
 }
 
-app.listen(PORT, () => {
-  log('');
-  log('========================================');
-  log(`  GMG API — port ${PORT}`);
-  log('========================================');
-  log('');
+async function start() {
+  await initTables();
+  app.listen(PORT, () => {
+    log('');
+    log('========================================');
+    log(`  GMG API — port ${PORT}`);
+    log('========================================');
+    log('');
+  });
+}
+
+start().catch((err) => {
+  console.error('Failed to start:', err);
+  process.exit(1);
 });
