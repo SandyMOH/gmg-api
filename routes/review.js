@@ -39,8 +39,14 @@ router.post("/:submissionId/approve", requireReviewer, async (req, res) => {
 
     // 3. Add applicant to WordPress certified applicator directory
     try {
-      const displayAddress = [
+      const gmapLocation = [
         submission.address,
+        submission.suburb,
+        submission.city,
+        submission.region,
+        submission.state,
+        submission.post_code,
+        submission.country,
       ].filter(Boolean).join(", ");
 
       const geo = await geocoder.geocode({
@@ -65,7 +71,8 @@ router.post("/:submissionId/approve", requireReviewer, async (req, res) => {
         state: submission.state,
         postCode: submission.post_code,
         country: submission.country,
-        displayAddress,
+        displayAddress:submission.address ,
+        gmapLocation,
         ...(geo ? { lat: geo.lat, lng: geo.lng } : {}),
       });
       console.log(`[WP] Added applicant ${licenseNumber} to certified applicator directory`);
