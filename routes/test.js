@@ -3,7 +3,7 @@ const router = express.Router();
 const { log } = require('../lib/logger');
 const { state, MAX_WEBHOOK_HISTORY, pushHistory } = require('../lib/state');
 const { handleRegistration } = require('../lib/registrationHandler');
-const { sendCongratulationsEmail } = require('../lib/emailSender');
+const { sendWelcomeEmail } = require('../lib/emailSender');
 const { arlo } = require('../lib/clients');
 
 router.get('/', async (req, res) => {
@@ -38,7 +38,7 @@ router.get('/email', async (req, res) => {
   log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   log(`TEST EMAIL: sending sample to test recipient (name: ${name})`);
 
-  const result = await sendCongratulationsEmail({ firstName: name, lastName: 'Applicant', email: 'real-applicant@example.com' });
+  const result = await sendWelcomeEmail({ fullName: `${name} Applicant`, email: 'real-applicant@example.com', uniqueCode: null });
   res.json({ message: 'Test email attempt complete', result });
 });
 
