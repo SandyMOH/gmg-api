@@ -14,7 +14,7 @@ const FILE_SIZE_LIMITS = {
 // Multer config — store in memory, upload to storage from there
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB hard ceiling (multer-level)
+  limits: { fileSize: 105 * 1024 * 1024 },
 });
 
 // POST /api/upload — upload image or video
