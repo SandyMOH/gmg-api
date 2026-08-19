@@ -39,8 +39,8 @@ router.post("/:id/submit", async (req, res) => {
     if (submission.status !== "pending") {
       return res.status(400).json({ error: "This application has already been submitted", ok: false });
     }
-    if (!submission.image_url || !submission.video_url) {
-      return res.status(400).json({ error: "Please upload both image and video before submitting", ok: false  });
+    if (!submission.images?.length || !submission.video_url) {
+      return res.status(400).json({ error: "Please upload at least one image and a video before submitting", ok: false  });
     }
 
     await submitApplication(id, consentDirectoryListing);
