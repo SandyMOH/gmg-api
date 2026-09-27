@@ -17,7 +17,6 @@ async function main() {
     clientId: process.env.ARLO_CLIENT_ID,
     clientSecret: process.env.ARLO_CLIENT_SECRET,
     platform: process.env.ARLO_PLATFORM,
-    refreshToken: process.env.ARLO_REFRESH_TOKEN,
   });
 
   const wp = new WpClient({

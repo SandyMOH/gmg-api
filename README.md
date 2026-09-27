@@ -100,7 +100,6 @@ DB_NAME=gmg_api
 ARLO_CLIENT_ID=
 ARLO_CLIENT_SECRET=
 ARLO_PLATFORM=
-ARLO_REFRESH_TOKEN=
 
 # WordPress
 WP_URL=https://your-site.com
