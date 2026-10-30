@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { requireReviewer } = require("../middleware/reviewerAuth");
 const { getSubmission, updateSubmissionStatus, updateSubmission, resetSubmission, countCertificatesForYear } = require("../lib/db");
-const { sendRejectionEmail, sendErrorAlert } = require("../lib/emailSender");
+const { sendRejectionEmail, sendErrorAlert, submissionAlertData } = require("../lib/emailSender");
 const { wp, geocoder } = require("../lib/clients");
 
 
@@ -10,15 +10,17 @@ const { wp, geocoder } = require("../lib/clients");
 // POST /api/review/approve
 // ============================================
 router.post("/:submissionId/approve", requireReviewer, async (req, res) => {
+  const { submissionId } = req.params;
+  let submission = null;
+  let licenseNumber = null;
   try {
-    const { submissionId } = req.params;
     const { reviewerNotes } = req.body;
 
     if (!submissionId) {
       return res.status(400).json({ error: "submissionId is required" });
     }
 
-    const submission = await getSubmission(submissionId);
+    submission = await getSubmission(submissionId);
     if (!submission) return res.status(404).json({ error: "Submission not found" });
     if (submission.status !== "submitted") {
       return res.status(400).json({ error: `Cannot review — current status is "${submission.status}"` });
@@ -28,7 +30,7 @@ router.post("/:submissionId/approve", requireReviewer, async (req, res) => {
     const year = now.getFullYear();
     const certCount = await countCertificatesForYear(year);
     const seqPadded = String(certCount + 1).padStart(4, "0");
-    const licenseNumber = `GMG-TXR-${year}-${seqPadded}`;
+    licenseNumber = `GMG-TXR-${year}-${seqPadded}`;
     const certificationDate = now.toISOString().split("T")[0];
 
     // 2. Update local DB (status + license + cert date)
@@ -79,7 +81,11 @@ router.post("/:submissionId/approve", requireReviewer, async (req, res) => {
     } catch (wpError) {
       console.error("[WP] Failed to add applicant:", wpError.message);
       try {
-        await sendErrorAlert("Create Applicant/Submission (WP)", wpError.message, { submissionId, licenseNumber });
+        await sendErrorAlert(
+          "Add to WordPress Directory",
+          `Application was approved in the database (license ${licenseNumber}) but was NOT added to the WordPress directory: ${wpError.message}`,
+          submissionAlertData(submission, { status: "approved", licenseNumber })
+        );
       } catch (_) {}
       // Don't fail the whole request — log and continue
     }
@@ -100,7 +106,11 @@ router.post("/:submissionId/approve", requireReviewer, async (req, res) => {
 
   } catch (error) {
     console.error("Approve error:", error);
-    await sendErrorAlert("Approve Application", error.message, { submissionId: req.params.submissionId });
+    await sendErrorAlert(
+      "Approve Application",
+      `Approval failed: ${error.message}`,
+      submissionAlertData(submission, { submissionId, licenseNumber })
+    );
     return res.status(500).json({ error: "Failed to process approval", ok: false });
   }
 });
@@ -109,15 +119,16 @@ router.post("/:submissionId/approve", requireReviewer, async (req, res) => {
 // POST /api/review/reject
 // ============================================
 router.post("/:submissionId/reject", requireReviewer, async (req, res) => {
+  const { submissionId } = req.params;
+  let submission = null;
   try {
-    const { submissionId } = req.params;
     const { reviewerNotes } = req.body;
 
     if (!submissionId) {
       return res.status(400).json({ error: "submissionId is required" });
     }
 
-    const submission = await getSubmission(submissionId);
+    submission = await getSubmission(submissionId);
     if (!submission) return res.status(404).json({ error: "Submission not found" });
     if (submission.status !== "submitted") {
       return res.status(400).json({ error: `Cannot review — current status is "${submission.status}"` });
@@ -144,6 +155,11 @@ router.post("/:submissionId/reject", requireReviewer, async (req, res) => {
       console.log("[EMAIL] Sent rejection email to:", submission.email);
     } catch (emailError) {
       console.error("[EMAIL] Failed to send rejection email:", emailError.message);
+      await sendErrorAlert(
+        "Send Rejection Email",
+        `Application was rejected but the applicant was NOT emailed their resubmission link (${newApplyLink}): ${emailError.message}`,
+        submissionAlertData(submission, { status: "rejected" })
+      );
     }
 
     return res.json({
@@ -156,7 +172,11 @@ router.post("/:submissionId/reject", requireReviewer, async (req, res) => {
 
   } catch (error) {
     console.error("Reject error:", error);
-    await sendErrorAlert('Reject Application', error.message, { submissionId });
+    await sendErrorAlert(
+      'Reject Application',
+      `Rejection failed: ${error.message}`,
+      submissionAlertData(submission, { submissionId })
+    );
     return res.status(500).json({ error: "Failed to process rejection" });
   }
 });

@@ -62,7 +62,11 @@ router.post('/approve', async (req, res) => {
     return res.json({ success: true });
   } catch (err) {
     log(`  APPROVE ERROR: ${err.message}`);
-    await sendErrorAlert('Approve Application', err.message, { arloRegistrationId });
+    await sendErrorAlert(
+      'Approve Application (WordPress)',
+      `Applicant was NOT added/updated in the WordPress directory: ${err.message}`,
+      { name, email, company, arloRegistrationId, licenseNumber }
+    );
     return res.status(500).json({ success: false, error: err.message });
   }
 });

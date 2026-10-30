@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const { uploadFile } = require("../lib/storage");
 const { getSubmission, updateSubmissionFiles, addSubmissionImages } = require("../lib/db");
-const { sendErrorAlert } = require("../lib/emailSender");
+const { sendErrorAlert, submissionAlertData } = require("../lib/emailSender");
 
 // Size limits per file type
 const FILE_SIZE_LIMITS = {
@@ -59,15 +59,15 @@ function validateFile(file, fileType) {
 
 // POST /api/upload — upload image(s) (field "files") or a video (field "file")
 router.post("/", handleUpload, async (req, res) => {
+  const { submissionId, fileType } = req.body;
+  const files = fileType === "image" ? req.files?.files : req.files?.file;
+  let submission = null;
   try {
-    const { submissionId, fileType } = req.body;
-    const files = fileType === "image" ? req.files?.files : req.files?.file;
-
     if (!files || files.length === 0 || !submissionId || !fileType) {
       return res.status(400).json({ error: "file(s), submissionId, and fileType are required", ok: false });
     }
 
-    const submission = await getSubmission(submissionId);
+    submission = await getSubmission(submissionId);
     if (!submission) return res.status(404).json({ error: "Submission not found", ok: false });
 
     // Validate every file before uploading any of them
@@ -101,7 +101,15 @@ router.post("/", handleUpload, async (req, res) => {
     return res.json({ message: "video uploaded successfully", url: result.url, filename: files[0].originalname, ok: true });
   } catch (error) {
     console.error("Upload error:", error);
-    await sendErrorAlert('File Upload', error.message, { submissionId: req.body.submissionId });
+    await sendErrorAlert(
+      'File Upload',
+      `Applicant's ${fileType || 'file'} upload failed: ${error.message}`,
+      submissionAlertData(submission, {
+        submissionId,
+        fileType,
+        files: files?.map((f) => `${f.originalname} (${(f.size / (1024 * 1024)).toFixed(1)}MB)`).join(', '),
+      })
+    );
     return res.status(500).json({ error: "Failed to upload file", ok: false });
   }
 });

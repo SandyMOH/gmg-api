@@ -6,7 +6,7 @@ const {
   createReviewerToken,
 } = require("../lib/db");
 const { requireReviewer } = require("../middleware/reviewerAuth");
-const { notifyReviewer, sendErrorAlert } = require("../lib/emailSender");
+const { notifyReviewer, sendErrorAlert, submissionAlertData } = require("../lib/emailSender");
 
 // GET /api/applicants/code/:code — lookup submission by unique code (for applicant form)
 router.get("/code/:code", async (req, res) => {
@@ -30,11 +30,12 @@ router.get("/code/:code", async (req, res) => {
 
 // POST /api/applicants/:id/submit — applicant finalizes submission
 router.post("/:id/submit", async (req, res) => {
+  const { id } = req.params;
+  let submission = null;
   try {
-    const { id } = req.params;
     const { consentDirectoryListing } = req.body;
 
-    const submission = await getSubmission(id);
+    submission = await getSubmission(id);
     if (!submission) return res.status(404).json({ error: "Submission not found", ok: false });
     if (submission.status !== "pending") {
       return res.status(400).json({ error: "This application has already been submitted", ok: false });
@@ -54,12 +55,21 @@ router.post("/:id/submit", async (req, res) => {
       await notifyReviewer(submission, token);
     } catch (emailError) {
       console.error("Failed to send notification:", emailError);
+      await sendErrorAlert(
+        "Notify Reviewer",
+        `Application was submitted but the reviewer was NOT notified, so it won't be reviewed until someone checks manually: ${emailError.message}`,
+        submissionAlertData(submission, { status: "submitted" })
+      );
     }
 
     return res.json({ message: "Application submitted successfully", reviewerToken, ok: true });
   } catch (error) {
     console.error("Submit error:", error);
-    await sendErrorAlert('Submit Application', error.message, { submissionId: id });
+    await sendErrorAlert(
+      'Submit Application',
+      `Applicant could not submit their application: ${error.message}`,
+      submissionAlertData(submission, { submissionId: id })
+    );
     return res.status(500).json({ error: "Failed to submit application", ok: false });
   }
 });
