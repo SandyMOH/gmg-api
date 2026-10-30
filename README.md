@@ -123,6 +123,7 @@ EMAIL_FROM=
 REVIEWER_EMAIL=               # Who gets notified when an application is submitted
 ADMIN_EMAIL=                  # Who gets pipeline error alerts
 ERROR_ALERT_EMAIL_ENABLED=false # Set to true to send error alert emails (alerts are always logged)
+TEAMS_WEBHOOK_URL=            # Teams Workflows webhook URL for error alerts (leave empty to disable)
 REVIEWER_TOKEN_EXPIRY_DAYS=7
 
 # Email test mode (sends to EMAIL_TEST_RECIPIENT instead of real applicant)
