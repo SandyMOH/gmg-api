@@ -3,6 +3,14 @@ const router = express.Router();
 const { log } = require('../lib/logger');
 const { state, MAX_WEBHOOK_HISTORY, pushHistory } = require('../lib/state');
 const { handleRegistration } = require('../lib/registrationHandler');
+const { arlo } = require('../lib/clients');
+const { requireApiSecret } = require('../middleware/apiSecret');
+
+// Backup keep-alive for an external scheduler (Hostinger cron), in case the in-app cron doesn't fire
+router.post('/keep-alive', requireApiSecret, async (req, res) => {
+  const ok = await arlo.keepAlive('external');
+  res.status(ok ? 200 : 500).json({ ok, error: ok ? undefined : arlo.lastAuthError });
+});
 
 router.get('/api/webhook/history', (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 20, MAX_WEBHOOK_HISTORY);
